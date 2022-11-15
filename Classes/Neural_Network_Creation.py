@@ -1,112 +1,59 @@
-import numpy as np
-import Function_Library.Activation_Functions as Act_Func
-from tqdm import tqdm
+#input criteria for the neural network:
+
+    #base data (train/test)
+    #data labels (train/test)
+    #layers structure (i.e [20,10,5] = 3 hidden layers, of size 20,10,5
+        #internally within the NN, these will be stored as a dictionary of named nodes
+        #each node will be its own class structure item, containing weights and biases
+        #naming convention = node_{layer_num}_{node_num}
+            #layer and node num will be 0 indexed
+    #connectome structure - 2 variations
+        #var1 - dense. input as string, simply generates a classic dense neural network
+        #var2 - sparse. input as a dict.
+            #dict key = node name (node connections go *from*)
+            #dict value = list, consisting of node names (node connections go *to*)
+    #activation function (string) (DO I NEED TO CHANGE THIS LATER? DIDN'T SEEM TO WORK GREAT)
+    #num inputs - number of inputs
+    #num outputs - number of output variables
+
+
+#
 
 
 class Neural_Network:
-
-    def __init__(self, base_data_train, base_data_test, base_label_train, base_label_test, architecture, activation, num_labels, num_features):
+    def __init__(self, base_data_train, base_data_test, base_label_train, base_label_test,
+                 layer_structure, connectome_structure, activation_function, num_inputs, num_outputs):
         import Function_Library.Preprocessing_Functions as Proc_Func
-        self.norm_data_train = Proc_Func.normalize(base_data_train)
-        self.norm_data_test = Proc_Func.normalize(base_data_test)
+        #self.norm_data_train = Proc_Func.normalize(base_data_train)
+        #self.norm_data_test = Proc_Func.normalize(base_data_test)
         self.label_train = base_label_train
         self.label_test = base_label_test
-        self.layers = {}
-        self.architecture = architecture
-        self.activation = activation
-        self.parameters = {}
-        self.m = self.norm_data_train.shape[1]
-        self.num_labels = num_labels
-        self.num_features = num_features
-        self.architecture.append(self.num_labels)
-        self.architecture.insert(0, self.num_features)
-        self.L = len(architecture)
+        self.node_dict = {}
+        self.layer_structure = layer_structure
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+        self.connectome_structure = connectome_structure
+        self.activation_function = activation_function
 
-    def initialize_parameters(self):
-        for i in range(1, self.L):
-            print(f"Initializing parameters for layer: {i}.")
-            self.parameters["w" + str(i)] = np.random.randn(self.architecture[i], self.architecture[i - 1]) * 0.01
-            self.parameters["b" + str(i)] = np.zeros((self.architecture[i], 1))
-
-    def predict(self, base_data_train):
-        params = self.parameters
-        n_layers = self.L - 1
-        values = [x]
-        for l in range(1, n_layers):
-            z = np.dot(params["w" + str(l)], values[l - 1]) + params["b" + str(l)]
-            a = eval(self.activation)(z)
-            values.append(a)
-        z = np.dot(params["w" + str(n_layers)], values[n_layers - 1]) + params["b" + str(n_layers)]
-        a = Act_Func.softmax(z)
-        if x.shape[1] > 1:
-            ans = np.argmax(a, axis=0)
-        else:
-            ans = np.argmax(a)
-        return ans
+    def create_internal_structure(self):
+        #instantialise the node dict:
+        #storing every node as the number 5 for now until i have something to provide them true contents
+        #instantalise input layer
+        for i in range(self.num_inputs):
+            keyval = f"node_0_{i}"
+            self.node_dict[keyval] = 5
+        #now instantialise inner layers:
+        #we'll add one to the index of the len of the list each time to allow for the 0 indexed inputs nodes
+        for i in range(len(self.layer_structure)):
+            curr_layer = 1+i
+            for j in range(self.layer_structure[i]):
+                keyval = f"node_{curr_layer}_{j}"
+                self.node_dict[keyval] = 5
+        # instantlise output layer
+        # work out index of num_layers (since 0 indexed = len(layer_structure) + 1
+        max_layer = len(self.layer_structure) + 1
+        for i in range(self.num_outputs):
+            keyval = f"node_{max_layer}_{i}"
+            self.node_dict[keyval] = 5
 
 
-    def accuracy(self, base_data_train, label_train):
-        P = self.predict(base_data_train)
-        return sum(np.equal(P, np.argmax(label_train, axis=0))) / label_train.shape[1] * 100
-
-    def forward(self):
-        params = self.parameters
-        self.layers["a0"] = self.norm_data_train
-        for l in range(1, self.L - 1):
-            self.layers["z" + str(l)] = np.dot(params["w" + str(l)],
-                                               self.layers["a" + str(l - 1)]) + params["b" + str(l)]
-            print(self.activation)
-            print(self.activation(self.layers["z" + str(l)]))
-            self.layers["a" + str(l)] = self.activation(self.layers["z" + str(l)])
-            assert self.layers["a" + str(l)].shape == (self.architecture[l], self.m)
-        self.layers["z" + str(self.L - 1)] = np.dot(params["w" + str(self.L - 1)],
-                                                    self.layers["a" + str(self.L - 2)]) + params["b" + str(self.L - 1)]
-        self.layers["a" + str(self.L - 1)] = Act_Func.softmax(self.layers["z" + str(self.L - 1)])
-        self.output = self.layers["a" + str(self.L - 1)]
-        assert self.output.shape == (self.num_labels, self.m)
-        assert all([s for s in np.sum(self.output, axis=1)])
-
-        cost = - np.sum(self.norm_data_train * np.log(self.output + 0.000000001))
-
-        return cost, self.layers
-
-    def backpropagate(self):
-        derivatives = {}
-        dZ = self.output - self.label_train
-        assert dZ.shape == (self.num_labels, self.m)
-        dW = np.dot(dZ, self.layers["a" + str(self.L - 2)].T) / self.m
-        db = np.sum(dZ, axis=1, keepdims=True) / self.m
-        dAPrev = np.dot(self.parameters["w" + str(self.L - 1)].T, dZ)
-        derivatives["dW" + str(self.L - 1)] = dW
-        derivatives["db" + str(self.L - 1)] = db
-
-        for l in range(self.L - 2, 0, -1):
-            dZ = dAPrev * Act_Func.derivative(self.activation, self.layers["z" + str(l)])
-            dW = 1. / self.m * np.dot(dZ, self.layers["a" + str(l - 1)].T)
-            db = 1. / self.m * np.sum(dZ, axis=1, keepdims=True)
-            if l > 1:
-                dAPrev = np.dot(self.parameters["w" + str(l)].T, (dZ))
-            derivatives["dW" + str(l)] = dW
-            derivatives["db" + str(l)] = db
-        self.derivatives = derivatives
-
-        return self.derivatives
-
-    def fit(self, epochs, lr=0.01):
-        self.costs = []
-        self.initialize_parameters()
-        self.accuracies = {"train": [], "test": []}
-        for epoch in tqdm(range(epochs), colour="BLUE"):
-            cost, cache = self.forward()
-            self.costs.append(cost)
-            derivatives = self.backpropagate()
-            for layer in range(1, self.L):
-                self.parameters["w" + str(layer)] = self.parameters["w" + str(layer)] - lr * derivatives["dW" + str(layer)]
-                self.parameters["b" + str(layer)] = self.parameters["b" + str(layer)] - lr * derivatives["db" + str(layer)]
-            train_accuracy = self.accuracy(self.norm_data_train, self.label_train)
-            test_accuracy = self.accuracy(self.norm_data_test, self.label_test)
-            if epoch % 2 == 0:
-                print(f"Epoch: {epoch:3d} | Cost: {cost:.3f} | Accuracy: {train_accuracy:.3f}")
-            self.accuracies["train"].append(train_accuracy)
-            self.accuracies["test"].append(test_accuracy)
-        print("Training terminated")
