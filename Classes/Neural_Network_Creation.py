@@ -23,7 +23,7 @@
 class Neural_Network:
     def __init__(self, base_data_train, base_data_test, base_label_train, base_label_test,
                  layer_structure, connectome_structure, activation_function, num_inputs, num_outputs):
-        import Function_Library.Preprocessing_Functions as Proc_Func
+        #leaving these commented out for now until I know the internal structure generation works
         #self.norm_data_train = Proc_Func.normalize(base_data_train)
         #self.norm_data_test = Proc_Func.normalize(base_data_test)
         self.label_train = base_label_train
