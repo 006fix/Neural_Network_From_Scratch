@@ -138,24 +138,27 @@ class Neural_Network:
 
     #new function to provide each node with a list of nodes it passes values forward to
     def provide_nodes_forward(self):
+        #look through each node
         for node in self.node_dict:
-            rel_nodes_dict = self.node_dict[node].weight_dict
-            print(f"rel nodes dict is {rel_nodes_dict}")
-            for key in rel_nodes_dict:
-                pertinent_node = self.node_dict[key]
-                print(f"key is {key}, pert_node = {pertinent_node.name}")
-                pertinent_node.forward_nodes.append(node)
+            #if we examine self.node_dict[node].weight_dict, we get a list of keys
+            #these keys correspond to nodes that this nodes contributes to
+            #as such, if we provide these keys to the forward_nodes of this dict, we will get the forward nodes
+            rel_dict = self.node_dict[node].weight_dict
+            for key in rel_dict:
+                self.node_dict[node].forward_nodes.append(key)
 
     #new function to provide each node with a list of nodes it receives values from
     def provide_nodes_backward(self):
-        #search through every node in our dictionary
+        #look through each nodes
         for node in self.node_dict:
-            #compare to every node in our dictionary
-            for node2 in self.node_dict:
-                #if our initial node is in the "contributes to" node of our secondary node
-                if node in self.node_dict[node2].forward_nodes:
-                    #add node2 to nodes list of contributing nodes
-                    self.node_dict[node2].backward_nodes.append(node)
+            #for each of these nodes, look at the weight dict:
+            for node2 in self.node_dict[node].weight_dict:
+                #for each node2 in these node dicts, find that node2, update its backwards
+                #to include node2 in its backwards dict
+                self.node_dict[node2].backward_nodes.append(node)
+
+
+
 
 
     # designed input : for input_val in self.norm_data_train:

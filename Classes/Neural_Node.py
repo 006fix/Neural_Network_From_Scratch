@@ -20,8 +20,6 @@ class Node:
             #print("Output Node, no connections made")
         else:
             for node in self.connectome:
-                print(f"self connectome is {self.connectome}")
-                print(node)
                 self.weight_dict[node] = (3*np.random.random_sample())
 
     def apply_applicable_activation(self, input_val):

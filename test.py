@@ -1,12 +1,11 @@
 
 import Classes.Neural_Network_Creation as NN_Creator
-test_NN = NN_Creator.Neural_Network([5,6,2], [5,6,1], 1, 1, [2], "dense", "relu", 2, 2, 'linear')
+test_NN = NN_Creator.Neural_Network([5,6,2], [5,6,1], 1, 1, [2,2], "dense", "relu", 2, 2, 'linear')
 test_NN.connectome_validity()
 test_NN.create_internal_structure()
 test_NN.populate_layers()
-sanity = test_NN.connectome_structure
 test_NN.provide_nodes_forward()
-#test_NN.provide_nodes_backward()
+test_NN.provide_nodes_backward()
 holdval = test_NN.node_dict
 #dict looks to be working as intended, test below
 #print(holdval)
@@ -36,11 +35,11 @@ holdval7 = test_NN.layers
 holdval8 = test_NN.layer_node_dict
 #print(holdval8)
 #test confirmed, provides accurate validity of which node contributes to this node
-holdval9 = test_NN.node_dict['node_1_0']
-print("foward nodes of 1_0 follow")
+holdval9 = test_NN.node_dict['node_3_1']
+print("FOWARD NODES FOLLOW")
 print(holdval9.forward_nodes)
-print("forward nodes end")
-holdval10 = test_NN.node_dict['node_1_0']
+holdval10 = test_NN.node_dict['node_3_1']
+print("backwards_nodes follow")
 print(holdval10.backward_nodes)
 
 #NEW TEST SEQUENCE - NOW WE PROVIDE OUR INPUT VALUES INTO OUR FORWARD PROPOGATION ALGORITHM
