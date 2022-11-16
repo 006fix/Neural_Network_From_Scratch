@@ -1,21 +1,24 @@
 
 import Classes.Neural_Network_Creation as NN_Creator
-test_NN = NN_Creator.Neural_Network([5,6], [5,6], 1, 1, [6,3], "dense", "relu", 2, 1, "relu")
+test_NN = NN_Creator.Neural_Network([5,6,2], [5,6,1], 1, 1, [2], "dense", "relu", 2, 2, 'linear')
 test_NN.connectome_validity()
 test_NN.create_internal_structure()
 test_NN.populate_layers()
+sanity = test_NN.connectome_structure
+test_NN.provide_nodes_forward()
+#test_NN.provide_nodes_backward()
 holdval = test_NN.node_dict
 #dict looks to be working as intended, test below
-print(holdval)
+#print(holdval)
 holdval2 = test_NN.connectome_structure
 #dense connectome fix appeasr to be working as intended, test below
-#print(holdval2)
+print(holdval2)
 #node dict appears to be working well, holds a good set of nodes, that are functional instantiations of the node class
 holdval3 = test_NN.node_dict
 #print(holdval3)
 #appears to be a valid test of a connection, shows the node contains two weightings, each of which are different, is not outut
 #done using input NN_Creator.Neural_Network([5,5], [5,5], 1, 1, [2,3], "dense", "relu", 2, 2)
-#holdval4 = test_NN.node_dict['node_0_1']
+holdval4 = test_NN.node_dict['node_0_0']
 #print(holdval4.weight_dict)
 #print(holdval4.is_output)
 #appears to be a valid test of connection, shows the node (output) contains two no weightings, is output
@@ -23,9 +26,23 @@ holdval3 = test_NN.node_dict
 #holdval5 = test_NN.node_dict['node_3_1']
 #print(holdval5.weight_dict)
 #print(holdval5.is_output)
+#works as intended, provides a suitable number for max layers
 holdval6 = test_NN.max_layer
 #print(holdval6)
+#works as intended, provides a suitable list of valid layers
 holdval7 = test_NN.layers
 #print(holdval7)
+#works as intended, provides a valid list of all nodes
 holdval8 = test_NN.layer_node_dict
-print(holdval8)
+#print(holdval8)
+#test confirmed, provides accurate validity of which node contributes to this node
+holdval9 = test_NN.node_dict['node_1_0']
+print("foward nodes of 1_0 follow")
+print(holdval9.forward_nodes)
+print("forward nodes end")
+holdval10 = test_NN.node_dict['node_1_0']
+print(holdval10.backward_nodes)
+
+#NEW TEST SEQUENCE - NOW WE PROVIDE OUR INPUT VALUES INTO OUR FORWARD PROPOGATION ALGORITHM
+#holdval11 = test_NN.forward_prop(test_NN.norm_data_train)
+#print(holdval11)

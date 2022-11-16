@@ -26,9 +26,11 @@ class Neural_Network:
     def __init__(self, base_data_train, base_data_test, base_label_train, base_label_test,
                  layer_structure, connectome_structure, activation_function, num_inputs, num_outputs,
                  output_function):
-        #leaving these commented out for now until I know the internal structure generation works
-        self.norm_data_train = Proc_Func.normalize(base_data_train)
-        self.norm_data_test = Proc_Func.normalize(base_data_test)
+        #THESE AREN'T WORKING, FIX LATER
+        #self.norm_data_train = Proc_Func.normalize(base_data_train)
+        #self.norm_data_test = Proc_Func.normalize(base_data_test)
+        self.norm_data_train = base_data_train
+        self.norm_data_test = base_data_test
         self.label_train = base_label_train
         self.label_test = base_label_test
         self.node_dict = {}
@@ -62,7 +64,7 @@ class Neural_Network:
             for key in self.node_dict:
                 checkstr = f"_{i}_"
                 keystr = checkstr.replace("_","")
-                newkeystr = f"Node_{keystr}"
+                newkeystr = f"layer_{keystr}"
                 if checkstr in key:
                     try:
                         holdval = self.layer_node_dict[newkeystr]
@@ -134,8 +136,69 @@ class Neural_Network:
             hold_node.instantiate_weighting()
             self.node_dict[keyval] = hold_node
 
+    #new function to provide each node with a list of nodes it passes values forward to
+    def provide_nodes_forward(self):
+        for node in self.node_dict:
+            rel_nodes_dict = self.node_dict[node].weight_dict
+            print(f"rel nodes dict is {rel_nodes_dict}")
+            for key in rel_nodes_dict:
+                pertinent_node = self.node_dict[key]
+                print(f"key is {key}, pert_node = {pertinent_node.name}")
+                pertinent_node.forward_nodes.append(node)
+
+    #new function to provide each node with a list of nodes it receives values from
+    def provide_nodes_backward(self):
+        #search through every node in our dictionary
+        for node in self.node_dict:
+            #compare to every node in our dictionary
+            for node2 in self.node_dict:
+                #if our initial node is in the "contributes to" node of our secondary node
+                if node in self.node_dict[node2].forward_nodes:
+                    #add node2 to nodes list of contributing nodes
+                    self.node_dict[node2].backward_nodes.append(node)
+
+
     # designed input : for input_val in self.norm_data_train:
         #SHOULD THIS BE INSIDE THE LOOP? WILL IT AFFECT SPEED?
     #future modification - include batch size as stopper of some kind, idk
+
     def forward_prop(self, input_val):
-        pass
+        print(f"input val is {input_val}")
+        #dict to store values passing forward from each node, used to determine contributory nodes
+        forward_passing_dict = {}
+        #start at layer 0, add flat inputs
+        #then iterate for remaining layers:
+        for key in self.layer_node_dict:
+            if key == 'layer_0':
+                holdval = self.layer_node_dict[key]
+                for val in range(len(holdval)):
+                    node_result = self.layer_node_dict[key][val]
+                    forward_passing_dict[node_result] = input_val[val]
+                    print(f" having parsed node {node_result}, dict = {forward_passing_dict}")
+            #all remaining nodes
+            #add sum of weight*value together, apply relevant function
+            else:
+                #take each node in this layer
+                holdval = self.layer_node_dict[key]
+                print(f"SECONDARY STAGE - HOLDVAL = {holdval}")
+                #below will be each individual node in the layer
+                for node in holdval:
+                    print(f"SECONDARY STAGE - ACTIVE NODE = {node}")
+                    # initialise value to hold the final result
+                    final_weight = 0
+                    rel_node = self.node_dict[node]
+                    print(f"SECONDARY STAGE - REL NODE = {rel_node.name}")
+                    contributing_node_dict = rel_node.weight_dict
+                    print(f"SECONDARY STAGE - REL NODE_WEIGHTS = {contributing_node_dict}")
+                    #now look at each node in this dict, multiply by the weight value, add together
+                    for contr_node in contributing_node_dict:
+                        node_weight = contributing_node_dict[contr_node]
+                        node_send_val = forward_passing_dict[contr_node]
+                        fin_val = node_weight * node_send_val
+                        final_weight += fin_val
+                    #now we have the sum of all final weights, apply the activation_function
+                    final_weight = node.apply_applicable_activation(final_weight)
+                    forward_passing_dict[node] = final_weight
+        return forward_passing_dict
+
+
