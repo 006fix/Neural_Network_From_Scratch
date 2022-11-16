@@ -43,8 +43,12 @@ class Neural_Network:
         self.layers = [0]
         #basic at input, will be overwritten later with the true value
         self.max_layer = 0
+        #dictionary to store nodes in each layer, saves recalculating later
+        self.layer_node_dict = {}
 
+    #because this will now check the dict of nodes, needs to run once those are populated
     def populate_layers(self):
+        #initial part of function gives us details on layers
         for i in range(len(self.layer_structure)):
             holdval = i+1
             self.layers.append(holdval)
@@ -53,6 +57,23 @@ class Neural_Network:
         holdval2 += 1
         self.max_layer = holdval2
         self.layers.append(holdval2)
+        #secondary part below gives us a dict containing each node at each layer
+        for i in self.layers:
+            for key in self.node_dict:
+                checkstr = f"_{i}_"
+                keystr = checkstr.replace("_","")
+                newkeystr = f"Node_{keystr}"
+                if checkstr in key:
+                    try:
+                        holdval = self.layer_node_dict[newkeystr]
+                        holdval.append(key)
+                        self.layer_node_dict[newkeystr] = holdval
+                    except:
+                        holdval = [key]
+                        self.layer_node_dict[newkeystr] = holdval
+
+
+
 
     #function to handle the "dense" input for connectome structure
     #where exists, manually creates a dense network in the same style as a normal input
@@ -114,6 +135,7 @@ class Neural_Network:
             self.node_dict[keyval] = hold_node
 
     # designed input : for input_val in self.norm_data_train:
+        #SHOULD THIS BE INSIDE THE LOOP? WILL IT AFFECT SPEED?
     #future modification - include batch size as stopper of some kind, idk
     def forward_prop(self, input_val):
         pass
