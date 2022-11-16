@@ -23,13 +23,15 @@ def softmax(z: np.ndarray) -> np.ndarray:
     return e / np.sum(e, axis=0)
 
 def derivative(function_name: str, z: np.ndarray) -> np.ndarray:
+    error_str = "No such activation"
     if function_name == "sigmoid":
         return sigmoid(z) * (1 - sigmoid(z))
-    if function_name == "tanh":
+    elif function_name == "tanh":
         return 1 - np.square(tanh(z))
-    if function_name == "relu":
+    elif function_name == "relu":
         y = (z > 0) * 1
         return y
-    if function_name == "leaky_relu":
+    elif function_name == "leaky_relu":
         return  np.where(z > 0, 1, 0.01)
-    return "No such activation"
+    else:
+        return error_str

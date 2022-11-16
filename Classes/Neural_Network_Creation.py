@@ -157,7 +157,12 @@ class Neural_Network:
                 #to include node2 in its backwards dict
                 self.node_dict[node2].backward_nodes.append(node)
 
-
+    #function to force reset of all nodes backpropogation data, to be run after every batch
+    #also needs to run once at startup
+    def reset_nodes_for_backprop(self):
+        for node in self.node_dict:
+            rel_node = self.node_dict[node]
+            rel_node.populate_blank_dict_count()
 
 
 
@@ -165,7 +170,7 @@ class Neural_Network:
         #SHOULD THIS BE INSIDE THE LOOP? WILL IT AFFECT SPEED?
     #future modification - include batch size as stopper of some kind, idk
 
-    def forward_prop(self, input_val):
+    def forward_prop(self, input_val, target_val):
         print(f"input val is {input_val}")
         #dict to store values passing forward from each node, used to determine contributory nodes
         forward_passing_dict = {}
@@ -191,17 +196,158 @@ class Neural_Network:
                     final_weight = 0
                     rel_node = self.node_dict[node]
                     print(f"SECONDARY STAGE - REL NODE = {rel_node.name}")
-                    contributing_node_dict = rel_node.weight_dict
-                    print(f"SECONDARY STAGE - REL NODE_WEIGHTS = {contributing_node_dict}")
-                    #now look at each node in this dict, multiply by the weight value, add together
-                    for contr_node in contributing_node_dict:
-                        node_weight = contributing_node_dict[contr_node]
-                        node_send_val = forward_passing_dict[contr_node]
-                        fin_val = node_weight * node_send_val
-                        final_weight += fin_val
-                    #now we have the sum of all final weights, apply the activation_function
-                    final_weight = node.apply_applicable_activation(final_weight)
-                    forward_passing_dict[node] = final_weight
-        return forward_passing_dict
+                    contributing_node_list = rel_node.backward_nodes
+                    print(f"SECONDARY STAGE - REL NODE_INCOMING_LINKS = {contributing_node_list}")
+                    #we are now iterating through each node in the layer
+                    #current node is held under the var 'node' (node name) and 'rel_node' (node itself)
+                    #we also have a list of contributory nodes, stored as a list of node names under 'contributing node list'
+
+                    #step 1 - find the outvals, and weights
+                    #for each node in contributing node list:
+                    for sending_node in contributing_node_list:
+                        #find the node in the dict forward_passing_dict
+                        sending_node_forward_val = forward_passing_dict[sending_node]
+                        #this holds the value its passing forward
+
+                        #find the node in the self.node_dict dict
+                        #find the nodes.weight_dict variable
+                        #locate the node this is going to (stored under var 'node'), and find its weight
+                        sending_node_weight = self.node_dict[sending_node].weight_dict[node]
+
+                        #multiply these values together
+                        sending_node_final = sending_node_weight * sending_node_forward_val
+                        print(f"I am about to modify the values for {node}. Original forward val was {sending_node_forward_val}, weight to modify with is {sending_node_weight}")
+                        final_weight += sending_node_final
+                    print(f"FINAL WEIGHT for node {node} = {final_weight}")
+                    #apply the activation function
+                    #this is held within the apply_applicable_activation function on the node in question
+                    #in this case, that's the var 'rel_node'
+                    #add the bias function
+                    final_weight += rel_node.bias
+                    print(f"I just added {rel_node.bias} to the final weight, to allow for bias addition prior to activation function")
+                    modified_output = rel_node.apply_applicable_activation(final_weight)
+                    print(f"MODIFIED WEIGHT FOR NODE {node}. It was {final_weight}, it is now {modified_output}")
+                    #finally, add this modified output to the weight forward dict
+                    forward_passing_dict[node] = modified_output
+        print("forward passing dict follows")
+        print(forward_passing_dict)
+        #THIS COST FUNCTION WILL ONLY WORK FOR INSTANCES WITH 1 OUTPUT VARIABLE
+        #find the output variable
+        output_variables = []
+        holdstr = f"_{self.max_layer}_"
+        for key in forward_passing_dict:
+            if holdstr in key:
+                output_variables.append(key)
+        #THIS IS THE BIT THAT WOULD HAVE TO CHANGE FOR MULTIPLE OUTPUT VARIABLES
+        cost = (forward_passing_dict[output_variables[0]] - target_val)**2
+        derived_val = forward_passing_dict[output_variables[0]]
+        print(f"Final cost is {cost}")
+
+        return cost, forward_passing_dict, target_val, derived_val
+
+
+    def backward_prop(self, cost, forward_passing_dict, target_val, derived_val, learning_rate):
+        #lets work backwards in layers since that's most intuitive
+        backwards_layers = list(reversed(self.layers))
+        for layer in backwards_layers:
+            keyval = f"layer_{layer}"
+            nodes_in_layer = self.layer_node_dict[keyval]
+            print(nodes_in_layer)
+            #now we have the nodes in that layer as a list
+            #if this is the minimum layer, we'd skip this entirely, but for now, continue
+            for node in nodes_in_layer:
+                #get a variable holding the actual node
+                active_node = self.node_dict[node]
+                #for top row
+                if layer == self.max_layer:
+                    #mod bias
+                    bias_mod = 2*(derived_val-target_val)
+                    bias_new = active_node.bias - (learning_rate * bias_mod)
+                    holdval = active_node.modification_dict['bias']
+                    holdval += bias_new
+                    active_node.modification_dict['bias'] = holdval
+                    print(f"Old bias was 0, new bias is {holdval}")
+                    #mod weights
+                    #modification at this top layer = (2*(derived val - target val)) * output val of source of weight val
+                    print("Backward nodes follow")
+                    print(active_node.backward_nodes)
+                    #now for each of these backwards nodes, we can modify their weights by finding them, finding
+                        #their output val, then modifying their modification_dict with the suitable values
+                    for backward_node in active_node.backward_nodes:
+                        backward_node_object = self.node_dict[backward_node]
+                        backward_node_outval = forward_passing_dict[backward_node]
+                        weight_bias_premod = (2*(derived_val-target_val)) * backward_node_outval
+                        #the above 3 provide us the object, and the premod weight bias
+                        #now we need its original weight
+                        orig_weight = backward_node_object.weight_dict[node]
+                        new_weight = orig_weight - (learning_rate * weight_bias_premod)
+                        #map it onto that subsidiary nodes weight dict
+                        holdval = backward_node_object.modification_dict[node]
+                        holdval += new_weight
+                        backward_node_object.modification_dict[node] = holdval
+                        print(f"for node {node}, we have modified the dict of {backward_node}, adding a new weight value of {holdval}, in place of the prior value of {backward_node_object.weight_dict[node]}")
+        #now we've modified everything, update every single nodes modification count by 1
+        for node in self.node_dict:
+            hold_node = self.node_dict[node]
+            prev_count = hold_node.modification_count
+            prev_count += 1
+            hold_node.modification_count = prev_count
+
+    def backward_prop_generalised(self, cost, forward_passing_dict, target_val, derived_val, learning_rate):
+        #lets work backwards in layers since that's most intuitive
+        backwards_layers = list(reversed(self.layers))
+        for layer in backwards_layers:
+            keyval = f"layer_{layer}"
+            nodes_in_layer = self.layer_node_dict[keyval]
+            print(nodes_in_layer)
+            #now we have the nodes in that layer as a list
+
+            #ADDITION
+
+            #if this is the minimum layer, we'd skip this entirely, but for now, continue
+            for node in nodes_in_layer:
+                #THIS IS WHERE I NEED TO
+
+
+
+
+                #get a variable holding the actual node
+                active_node = self.node_dict[node]
+                #for top row
+                #mod bias
+                bias_mod = 2*(derived_val-target_val)
+                bias_new = active_node.bias - (learning_rate * bias_mod)
+                holdval = active_node.modification_dict['bias']
+                holdval += bias_new
+                active_node.modification_dict['bias'] = holdval
+                print(f"Old bias was 0, new bias is {holdval}")
+                #mod weights
+                #modification at this top layer = (2*(derived val - target val)) * output val of source of weight val
+                print("Backward nodes follow")
+                print(active_node.backward_nodes)
+                #now for each of these backwards nodes, we can modify their weights by finding them, finding
+                    #their output val, then modifying their modification_dict with the suitable values
+                for backward_node in active_node.backward_nodes:
+                    backward_node_object = self.node_dict[backward_node]
+                    backward_node_outval = forward_passing_dict[backward_node]
+                    weight_bias_premod = (2*(derived_val-target_val)) * backward_node_outval
+                    #the above 3 provide us the object, and the premod weight bias
+                    #now we need its original weight
+                    orig_weight = backward_node_object.weight_dict[node]
+                    new_weight = orig_weight - (learning_rate * weight_bias_premod)
+                    #map it onto that subsidiary nodes weight dict
+                    holdval = backward_node_object.modification_dict[node]
+                    holdval += new_weight
+                    backward_node_object.modification_dict[node] = holdval
+                    print(f"for node {node}, we have modified the dict of {backward_node}, adding a new weight value of {holdval}, in place of the prior value of {backward_node_object.weight_dict[node]}")
+        #now we've modified everything, update every single nodes modification count by 1
+        for node in self.node_dict:
+            hold_node = self.node_dict[node]
+            prev_count = hold_node.modification_count
+            prev_count += 1
+            hold_node.modification_count = prev_count
+
+
+
 
 

@@ -12,6 +12,8 @@ class Node:
         self.activation = activation
         self.forward_nodes = []
         self.backward_nodes = []
+        self.modification_dict = {}
+        self.modification_count = 0
 
     def instantiate_weighting(self):
         if self.is_output:
@@ -36,3 +38,13 @@ class Node:
         else:
             raise ValueError(f"""I'm afraid I was unable to find a suitale activation function for 
                 Node {self.name}, activation function provided was {self.activation}""")
+
+
+    def populate_blank_dict_count(self):
+        #make blank values for every weight in the weight dict, use the same key
+        for key in self.weight_dict:
+            self.modification_dict[key] = 0
+        #now add the bias as a value
+        self.modification_dict['bias'] = 0
+        #now make the count 0 to reset it
+        self.modification_count = 0
