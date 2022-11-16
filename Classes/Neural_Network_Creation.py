@@ -19,6 +19,7 @@
 
 #
 
+import Classes.Neural_Node as Node
 
 class Neural_Network:
     def __init__(self, base_data_train, base_data_test, base_label_train, base_label_test,
@@ -35,25 +36,62 @@ class Neural_Network:
         self.connectome_structure = connectome_structure
         self.activation_function = activation_function
 
+    #function to handle the "dense" input for connectome structure
+    #where exists, manually creates a dense network in the same style as a normal input
+    def connectome_validity(self):
+        #only triggers if the connectome structure was given as dense
+        if self.connectome_structure == 'dense':
+            connectome_holder = {}
+            for i in (range(len(self.layer_structure) + 1)):
+                #if input row, use num_inputs
+                #else, use layer_structure of layer n to compare to layer n+1
+                if i == 0:
+                    iterator = self.num_inputs
+                else:
+                    iterator = self.layer_structure[i-1]
+                #if final item of the loop
+                #in this case, compare to output features instead
+                if i == len(self.layer_structure):
+                    second_iterator = self.num_outputs
+                else:
+                    second_iterator = self.layer_structure[i]
+                for j in range(iterator):
+                    keyval = f"node_{i}_{j}"
+                    holdlist = []
+                    for k in range(second_iterator):
+                        valval = f"node_{i+1}_{k}"
+                        holdlist.append(valval)
+                    connectome_holder[keyval] = holdlist
+            self.connectome_structure = connectome_holder
+        else:
+            #otherwise, ignore
+            print("Option 'dense' was not selected. Provided connectome structure will be utilised")
+
     def create_internal_structure(self):
         #instantialise the node dict:
         #storing every node as the number 5 for now until i have something to provide them true contents
         #instantalise input layer
         for i in range(self.num_inputs):
             keyval = f"node_0_{i}"
-            self.node_dict[keyval] = 5
+            hold_node = Node.Node(keyval, self.connectome_structure[keyval], 0, False)
+            hold_node.instantiate_weighting()
+            self.node_dict[keyval] = hold_node
         #now instantialise inner layers:
         #we'll add one to the index of the len of the list each time to allow for the 0 indexed inputs nodes
         for i in range(len(self.layer_structure)):
             curr_layer = 1+i
             for j in range(self.layer_structure[i]):
                 keyval = f"node_{curr_layer}_{j}"
-                self.node_dict[keyval] = 5
+                hold_node = Node.Node(keyval, self.connectome_structure[keyval],0, False)
+                hold_node.instantiate_weighting()
+                self.node_dict[keyval] = hold_node
         # instantlise output layer
         # work out index of num_layers (since 0 indexed = len(layer_structure) + 1
         max_layer = len(self.layer_structure) + 1
         for i in range(self.num_outputs):
             keyval = f"node_{max_layer}_{i}"
-            self.node_dict[keyval] = 5
-
+            #note variation here - final is_output variable = True, hence second weighting variable = False
+            hold_node = Node.Node(keyval, False, 0, True)
+            hold_node.instantiate_weighting()
+            self.node_dict[keyval] = hold_node
 
