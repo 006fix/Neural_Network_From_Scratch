@@ -20,13 +20,15 @@
 #
 
 import Classes.Neural_Node as Node
+import Function_Library.Preprocessing_Functions as Proc_Func
 
 class Neural_Network:
     def __init__(self, base_data_train, base_data_test, base_label_train, base_label_test,
-                 layer_structure, connectome_structure, activation_function, num_inputs, num_outputs):
+                 layer_structure, connectome_structure, activation_function, num_inputs, num_outputs,
+                 output_function):
         #leaving these commented out for now until I know the internal structure generation works
-        #self.norm_data_train = Proc_Func.normalize(base_data_train)
-        #self.norm_data_test = Proc_Func.normalize(base_data_test)
+        self.norm_data_train = Proc_Func.normalize(base_data_train)
+        self.norm_data_test = Proc_Func.normalize(base_data_test)
         self.label_train = base_label_train
         self.label_test = base_label_test
         self.node_dict = {}
@@ -35,6 +37,22 @@ class Neural_Network:
         self.num_outputs = num_outputs
         self.connectome_structure = connectome_structure
         self.activation_function = activation_function
+        self.output_function = output_function
+        #this curently holds layer 0 (input layer)
+            #additional function will populate with existing layers
+        self.layers = [0]
+        #basic at input, will be overwritten later with the true value
+        self.max_layer = 0
+
+    def populate_layers(self):
+        for i in range(len(self.layer_structure)):
+            holdval = i+1
+            self.layers.append(holdval)
+        #find max val, add layer 1 above this (output layer
+        holdval2 = max(self.layers)
+        holdval2 += 1
+        self.max_layer = holdval2
+        self.layers.append(holdval2)
 
     #function to handle the "dense" input for connectome structure
     #where exists, manually creates a dense network in the same style as a normal input
@@ -73,7 +91,7 @@ class Neural_Network:
         #instantalise input layer
         for i in range(self.num_inputs):
             keyval = f"node_0_{i}"
-            hold_node = Node.Node(keyval, self.connectome_structure[keyval], 0, False)
+            hold_node = Node.Node(self.activation_function, keyval, self.connectome_structure[keyval], 0, False)
             hold_node.instantiate_weighting()
             self.node_dict[keyval] = hold_node
         #now instantialise inner layers:
@@ -82,7 +100,7 @@ class Neural_Network:
             curr_layer = 1+i
             for j in range(self.layer_structure[i]):
                 keyval = f"node_{curr_layer}_{j}"
-                hold_node = Node.Node(keyval, self.connectome_structure[keyval],0, False)
+                hold_node = Node.Node(self.activation_function, keyval, self.connectome_structure[keyval],0, False)
                 hold_node.instantiate_weighting()
                 self.node_dict[keyval] = hold_node
         # instantlise output layer
@@ -91,7 +109,11 @@ class Neural_Network:
         for i in range(self.num_outputs):
             keyval = f"node_{max_layer}_{i}"
             #note variation here - final is_output variable = True, hence second weighting variable = False
-            hold_node = Node.Node(keyval, False, 0, True)
+            hold_node = Node.Node(self.output_function, keyval, False, 0, True)
             hold_node.instantiate_weighting()
             self.node_dict[keyval] = hold_node
 
+    # designed input : for input_val in self.norm_data_train:
+    #future modification - include batch size as stopper of some kind, idk
+    def forward_prop(self, input_val):
+        pass
