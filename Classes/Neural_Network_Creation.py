@@ -296,50 +296,61 @@ class Neural_Network:
     def backward_prop_generalised(self, cost, forward_passing_dict, target_val, derived_val, learning_rate):
         #lets work backwards in layers since that's most intuitive
         backwards_layers = list(reversed(self.layers))
+
+        #ADDITION
+        #hold variable to hold the generalised (2*(ypred-yact)), to save calculation cost of regenerating
+        repeated_multiplier = 2*(derived_val-target_val)
+
         for layer in backwards_layers:
             keyval = f"layer_{layer}"
             nodes_in_layer = self.layer_node_dict[keyval]
             print(nodes_in_layer)
             #now we have the nodes in that layer as a list
-
-            #ADDITION
-
             #if this is the minimum layer, we'd skip this entirely, but for now, continue
             for node in nodes_in_layer:
-                #THIS IS WHERE I NEED TO
-
-
-
-
+                #the below code should be complete, assuming that the node is the output node
+                #as such, make a check on the below actual node. If yes, run the entirety of the below
+                #if no, print an output simply stating this for now
                 #get a variable holding the actual node
                 active_node = self.node_dict[node]
-                #for top row
-                #mod bias
-                bias_mod = 2*(derived_val-target_val)
-                bias_new = active_node.bias - (learning_rate * bias_mod)
-                holdval = active_node.modification_dict['bias']
-                holdval += bias_new
-                active_node.modification_dict['bias'] = holdval
-                print(f"Old bias was 0, new bias is {holdval}")
-                #mod weights
-                #modification at this top layer = (2*(derived val - target val)) * output val of source of weight val
-                print("Backward nodes follow")
-                print(active_node.backward_nodes)
-                #now for each of these backwards nodes, we can modify their weights by finding them, finding
-                    #their output val, then modifying their modification_dict with the suitable values
-                for backward_node in active_node.backward_nodes:
-                    backward_node_object = self.node_dict[backward_node]
-                    backward_node_outval = forward_passing_dict[backward_node]
-                    weight_bias_premod = (2*(derived_val-target_val)) * backward_node_outval
-                    #the above 3 provide us the object, and the premod weight bias
-                    #now we need its original weight
-                    orig_weight = backward_node_object.weight_dict[node]
-                    new_weight = orig_weight - (learning_rate * weight_bias_premod)
-                    #map it onto that subsidiary nodes weight dict
-                    holdval = backward_node_object.modification_dict[node]
-                    holdval += new_weight
-                    backward_node_object.modification_dict[node] = holdval
-                    print(f"for node {node}, we have modified the dict of {backward_node}, adding a new weight value of {holdval}, in place of the prior value of {backward_node_object.weight_dict[node]}")
+                output_node = active_node.is_output
+                if output_node:
+                    #for top row
+                    #mod bias
+                    bias_mod = repeated_multiplier
+                    bias_new = active_node.bias - (learning_rate * bias_mod)
+                    holdval = active_node.modification_dict['bias']
+                    holdval += bias_new
+                    active_node.modification_dict['bias'] = holdval
+                    print(f"Old bias was 0, new bias is {holdval}")
+                    #mod weights
+                    #modification at this top layer = (2*(derived val - target val)) * output val of source of weight val
+                    print("Backward nodes follow")
+                    print(active_node.backward_nodes)
+                    #now for each of these backwards nodes, we can modify their weights by finding them, finding
+                        #their output val, then modifying their modification_dict with the suitable values
+                    for backward_node in active_node.backward_nodes:
+                        backward_node_object = self.node_dict[backward_node]
+                        backward_node_outval = forward_passing_dict[backward_node]
+                        weight_bias_premod = repeated_multiplier * backward_node_outval
+                        #the above 3 provide us the object, and the premod weight bias
+                        #now we need its original weight
+                        orig_weight = backward_node_object.weight_dict[node]
+                        new_weight = orig_weight - (learning_rate * weight_bias_premod)
+                        #map it onto that subsidiary nodes weight dict
+                        holdval = backward_node_object.modification_dict[node]
+                        holdval += new_weight
+                        backward_node_object.modification_dict[node] = holdval
+                        print(f"for node {node}, we have modified the dict of {backward_node}, adding a new weight value of {holdval}, in place of the prior value of {backward_node_object.weight_dict[node]}")
+                else:
+                    print(f"I'm afraid node {node} was not an output node, as such this operation has not run")
+                    #NOW WE COMMENCE THE ALGORITHM
+                    #we already have an algorithm above that will give us the basic generic algorithm
+                    #above we have some code that will get us a generic structure
+                    #in theory, this could be said to be bla * unknown var, where unknown var is all the additional variables we must derive
+                    #given this, if we write code which will tell us all the additional unknown variables we must derive, we can slot this into the above
+                    #and then no need of an if/else
+
         #now we've modified everything, update every single nodes modification count by 1
         for node in self.node_dict:
             hold_node = self.node_dict[node]

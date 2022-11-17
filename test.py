@@ -58,5 +58,5 @@ print("COMMENCING TERTIARY STAGE TESTING")
 print("COMMENCING TERTIARY STAGE TESTING")
 #triggering the backprop algorithm
 print(holdval10.modification_count)
-test_NN.backward_prop(cost, forward_passing_dict, target_val, derived_val, 0.01)
+test_NN.backward_prop_generalised(cost, forward_passing_dict, target_val, derived_val, 0.01)
 print(holdval10.modification_count)
