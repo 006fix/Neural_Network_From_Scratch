@@ -39,6 +39,20 @@ class Node:
             raise ValueError(f"""I'm afraid I was unable to find a suitale activation function for 
                 Node {self.name}, activation function provided was {self.activation}""")
 
+    def apply_applicable_inverse(self, input_val):
+        if self.activation == 'sigmoid':
+            return Act_Func.sigmoid_inverse(input_val)
+        elif self.activation == 'relu':
+            return Act_Func.relu_inverse(input_val)
+        elif self.activation == 'tanh':
+            return Act_Func.tanh_inverse(input_val)
+        elif self.activation == 'leaky_relu':
+            return Act_Func.leaky_relu_inverse(input_val)
+        elif self.activation == 'linear':
+            return input_val
+        else:
+            raise ValueError(f"""I'm afraid I was unable to find a suitale activation function for 
+                Node {self.name}, activation function provided was {self.activation}""")
 
     def populate_blank_dict_count(self):
         #make blank values for every weight in the weight dict, use the same key

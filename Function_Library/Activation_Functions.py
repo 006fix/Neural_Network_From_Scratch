@@ -22,6 +22,19 @@ def softmax(z: np.ndarray) -> np.ndarray:
     e = np.exp(z - np.max(z))
     return e / np.sum(e, axis=0)
 
+def sigmoid_inverse(z):
+    return sigmoid(z) * (1- sigmoid(z))
+
+def tanh_inverse(z):
+    return 1 - np.square(tanh(z))
+
+def relu_inverse(z):
+    y = (z > 0) * 1
+    return y
+
+def leaky_relu_inverse(z):
+    return np.where(z > 0, 1, 0.01)
+
 def derivative(function_name: str, z: np.ndarray) -> np.ndarray:
     error_str = "No such activation"
     if function_name == "sigmoid":
