@@ -296,6 +296,20 @@ class Neural_Network:
             hold_node.modification_count = prev_count
 
     def backward_prop_generalised(self, cost, forward_passing_dict, target_val, derived_val, learning_rate):
+
+        #ACTUALLY, I THINK IT MAY BE FINE?
+        #MODIFY OUR PRINTS TO REFER TO SEND NODE AND TO NODE, AND LETS SEE
+        #ASSUMING IT WORKS, NEXT STEP IS MODIFYING THE WEIGHTS EVERY N INPUTS
+
+        #THIS REQUIRES A FIX.
+        #ASSUME 2 NEURONS, LINKED TO 2 PRIOR NEURONS
+        #THIS FUNCTION CURRENTLY WILL UPDATE EACH PRIOR WEIGHTING TWICE!!!
+        #SOLUTION
+        #MAKE A DICT OF EVERY WEIGHTING THAT HAS BEEN MODIFIED
+        #IF THE WEIGHTING HAS ALREADY BEEN MODIFIED, DO NOT MODIFY IT AGAIN
+        #HOW? DEFINE EACH WEIGHTING AS A LABEL OF {SOURCE_NODE--END_NODE}, BINARY FLAG FOR VALUE
+
+
         #lets work backwards in layers since that's most intuitive
         backwards_layers = list(reversed(self.layers))
 
@@ -381,7 +395,7 @@ class Neural_Network:
                 #EVERYTHING BELOW THIS LINE IS FINE, however we will need to add a multiplier to each for the above
                 #mod bias
                 bias_mod = repeated_multiplier
-                bias_new = (active_node.bias - (learning_rate * bias_mod)) * end_result_multiplier
+                bias_new = (active_node.bias - (learning_rate * bias_mod * end_result_multiplier))
                 holdval = active_node.modification_dict['bias']
                 holdval += bias_new
                 if layer != 0:
@@ -403,7 +417,7 @@ class Neural_Network:
                     #the above 3 provide us the object, and the premod weight bias
                     #now we need its original weight
                     orig_weight = backward_node_object.weight_dict[node]
-                    new_weight = (orig_weight - (learning_rate * weight_bias_premod)) * end_result_multiplier
+                    new_weight = (orig_weight - (learning_rate * weight_bias_premod * end_result_multiplier))
                     #map it onto that subsidiary nodes weight dict
                     holdval = backward_node_object.modification_dict[node]
                     holdval += new_weight

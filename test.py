@@ -1,6 +1,6 @@
 
 import Classes.Neural_Network_Creation as NN_Creator
-test_NN = NN_Creator.Neural_Network([0.02, 0.5], [5,5], 3, 3, [2,2], "dense", "tanh", 2, 1, 'linear')
+test_NN = NN_Creator.Neural_Network([0.02, 0.5], [5,5], 3, 3, [5,5], "dense", "tanh", 2, 1, 'linear')
 test_NN.connectome_validity()
 test_NN.create_internal_structure()
 test_NN.populate_layers()
